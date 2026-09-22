@@ -1,17 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import { t } from "@/lib/strings";
 import ResetPasswordForm from "./reset-password-form";
 
-export default async function ResetPasswordPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // Only reachable with a recovery session (arrived via /auth/callback).
-  if (!user) redirect("/login");
-
+export default function ResetPasswordPage() {
   return (
     <div className="flex flex-col flex-1 items-center justify-center bg-sand min-h-screen px-4">
       <div className="w-full max-w-sm">
