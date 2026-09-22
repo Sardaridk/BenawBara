@@ -1,26 +1,146 @@
 @import "tailwindcss";
 
+/* ============================================
+   BenawBara — Design Tokens
+   Extracted from mahalli-marketplace.html mockup
+   ============================================ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Core palette */
+  --ink: #16262B;
+  --sand: #F6F1E4;
+  --sand-2: #EFE7D4;
+  --teal: #0E6B63;
+  --teal-deep: #0A4F49;
+  --saffron: #E8A23D;
+  --clay: #C1502E;
+  --stone: #8B8378;
+  --card: #FFFDF8;
+
+  /* Semantic aliases */
+  --background: var(--sand);
+  --foreground: var(--ink);
 }
 
+/* Register palette + fonts as Tailwind theme tokens */
 @theme inline {
+  /* Colors */
+  --color-ink: var(--ink);
+  --color-sand: var(--sand);
+  --color-sand-2: var(--sand-2);
+  --color-teal: var(--teal);
+  --color-teal-deep: var(--teal-deep);
+  --color-saffron: var(--saffron);
+  --color-clay: var(--clay);
+  --color-stone: var(--stone);
+  --color-card: var(--card);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  /* Fonts — values injected by next/font/google CSS variables */
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-ibm-plex-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* ============================================
+   Base styles
+   ============================================ */
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Soft warm ambience behind the sand background for depth. */
+  background-image:
+    radial-gradient(60rem 40rem at 15% -10%, rgba(14, 107, 99, 0.05), transparent 60%),
+    radial-gradient(50rem 40rem at 100% 0%, rgba(232, 162, 61, 0.06), transparent 55%);
+  background-attachment: fixed;
+}
+
+h1, h2, h3, .display {
+  font-family: var(--font-display), Georgia, serif;
+}
+
+/* ============================================
+   Modern UI utilities
+   ============================================ */
+
+/* Consistent image frame: fixes a uniform shape for every listing photo so the
+   feed stays tidy no matter the source aspect ratio. The child photo uses
+   object-cover to fill without distortion. Pair with an aspect-* utility. */
+.media-frame {
+  position: relative;
+  overflow: hidden;
+  background: var(--sand-2);
+}
+
+/* Elevated card interaction — a soft, warm shadow that lifts on hover. */
+.card {
+  box-shadow: 0 1px 2px rgba(22, 38, 43, 0.04), 0 1px 3px rgba(22, 38, 43, 0.06);
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 0.22s ease;
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(22, 38, 43, 0.12), 0 4px 8px rgba(22, 38, 43, 0.06);
+  border-color: color-mix(in srgb, var(--teal) 35%, var(--sand-2));
+}
+
+/* Frosted glass header — modern translucency over the scrolling feed. */
+.glass {
+  background: color-mix(in srgb, var(--ink) 92%, transparent);
+  backdrop-filter: saturate(140%) blur(12px);
+  -webkit-backdrop-filter: saturate(140%) blur(12px);
+}
+
+/* Category chip micro-interaction. */
+.chip {
+  transition: transform 0.15s ease, background-color 0.2s ease,
+    border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+.chip:active {
+  transform: scale(0.96);
+}
+.chip[data-active="true"] {
+  box-shadow: 0 4px 12px rgba(14, 107, 99, 0.28);
+}
+
+/* Gentle entrance for feed cards. */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-rise {
+  animation: rise 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card, .chip, .animate-rise, .media-frame::before {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Ticket-style monospace price tag (signature detail from mockup).
+   The notch sits on the inline-start edge; in RTL that's the right side, so it
+   mirrors automatically via the [dir="rtl"] override below. */
+.ticket {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-weight: 600;
+  background: var(--ink);
+  color: var(--saffron);
+  padding: 5px 8px 5px 10px;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%);
+  display: inline-block;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 8px rgba(22, 38, 43, 0.18);
+}
+
+[dir="rtl"] .ticket {
+  padding: 5px 10px 5px 8px;
+  clip-path: polygon(8px 0, 100% 0, 100% 100%, 8px 100%, 0 50%);
 }

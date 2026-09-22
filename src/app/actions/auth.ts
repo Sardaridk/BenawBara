@@ -33,14 +33,37 @@ function mapAuthError(message: string): string {
   if (m.includes("invalid login credentials")) return errors.wrongCredentials;
   if (m.includes("email not confirmed")) return errors.emailNotConfirmed;
   if (m.includes("password")) return errors.passwordTooShort;
+  if (m.includes("already registered") || m.includes("already exists") || m.includes("user_already_exists")) {
+    return errors.emailAlreadyRegistered;
+  }
+  if (m.includes("rate limit")) return errors.authGeneric;
   return errors.authGeneric;
 }
 
 /**
+ * TEMP DEBUG: Supabase auth errors are objects whose useful fields
+ * (status/name/code) are non-enumerable, so plain console.error prints "{}".
+ * This pulls them out explicitly. Remove before go-live.
+ */
+function logAuthError(where: string, error: unknown): void {
+  const e = error as {
+    message?: string;
+    status?: number;
+    name?: string;
+    code?: string;
+  };
+  console.error(`[auth] ${where} failed:`, {
+    message: e?.message,
+    status: e?.status,
+    name: e?.name,
+    code: e?.code,
+  });
+}
+
+/**
  * Sign up a new user with email + password.
- * "Confirm email" is ON in Supabase, so no session is created here — the user
- * must click the emailed confirmation link. We return { emailSent: true } and
- * the form shows a "check your inbox" panel.
+ * If the user is already registered, Supabase either returns an error or
+ * an empty `identities` array. We inform the user with a clear message.
  */
 export async function signUpWithPassword(
   _prev: AuthResult | undefined,
@@ -56,17 +79,22 @@ export async function signUpWithPassword(
 
   const supabase = await createClient();
   const origin = await getOrigin();
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: { emailRedirectTo: `${origin}/auth/callback` },
   });
 
-  if (error) return { error: mapAuthError(error.message) };
+  if (error) {
+    logAuthError("signUp", error);
+    return { error: mapAuthError(error.message) };
+  }
 
-  // Anti-enumeration: an already-registered email returns success with an empty
-  // `identities` array. Show the same "check your inbox" panel either way so we
-  // don't leak which emails exist, while genuine new users still get a link.
+  // If the user is already registered, Supabase returns data.user with an empty identities array []
+  if (data?.user?.identities && data.user.identities.length === 0) {
+    return { error: errors.emailAlreadyRegistered };
+  }
+
   return { emailSent: true };
 }
 
@@ -84,7 +112,10 @@ export async function signInWithPassword(
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-  if (error) return { error: mapAuthError(error.message) };
+  if (error) {
+    logAuthError("signIn", error);
+    return { error: mapAuthError(error.message) };
+  }
 
   redirect("/");
 }

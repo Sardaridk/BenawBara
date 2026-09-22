@@ -27,6 +27,16 @@ export const t = {
   categoryAll: "هەموو",
   backToMarket: "گەڕانەوە بۆ بازاڕ",
   cancel: "پاشگەزبوونەوە",
+  close: "داخستن",
+  myListings: "ڕاگەیەنراوەکانم",
+  myAccount: "هەژماری من",
+  editProfile: "دەستکاریکردنی پرۆفایل",
+
+  // Sorting
+  sort: "ڕیزبەندی",
+  sortNewest: "نوێترین",
+  sortPriceAsc: "نرخ: کەمترین",
+  sortPriceDesc: "نرخ: بەرزترین",
 
   // Feed
   listingsNearby: (n: number) => `${n} ڕاگەیەنراو لە نزیکەوە`,
@@ -128,6 +138,30 @@ export const t = {
   savingChanges: "پاشەکەوتکردنی گۆڕانکارییەکان…",
   saveChanges: "پاشەکەوتکردنی گۆڕانکارییەکان",
 
+  // My listings dashboard
+  activeListings: "بەردەستەکان",
+  soldListings: "فرۆشراوەکان",
+  noMyListings: "هێشتا هیچ ڕاگەیەنراوێکت بڵاونەکردووەتەوە.",
+  noSoldListings: "هیچ ڕاگەیەنراوێکی فرۆشراوت نییە.",
+  postFirstListing: "یەکەم ڕاگەیەنراوت بڵاوبکەرەوە",
+
+  // Reporting / Moderation
+  reportListing: "سکاڵا لەسەر ڕاگەیەنراو",
+  reportTitle: "تۆمارکردنی سکاڵا",
+  reportSubtitle: "ئەگەر ئەم ڕاگەیەنراوە گوماناوییە یان پێشێلکاری تێدایە، تکایە ئاگادارمان بکەرەوە.",
+  reportReasonLabel: "هۆکاری سکاڵا",
+  reportReasonPlaceholder: "هۆکارێک هەڵبژێرە…",
+  reportDetailsLabel: "ڕوونکردنەوەی زیاتر (ئارەزوومەندانە)",
+  reportDetailsPlaceholder: "وردەکاری زیاتر بنووسە…",
+  submitReport: "ناردنی سکاڵا",
+  submittingReport: "ناردن…",
+  reportSuccess: "سوپاس، سکاڵاکەت بە سەرکەوتوویی تۆمارکرا و پێداچوونەوەی بۆ دەکرێت.",
+  reasonScam: "فێڵکردن یان ساختە",
+  reasonSold: "کاڵاکە پێشتر فرۆشراوە",
+  reasonInappropriate: "ناوەڕۆکی نەشیاو",
+  reasonWrongInfo: "نرخ یان زانیاری هەڵە",
+  reasonOther: "هۆکاری تر",
+
   // Metadata
   metaTitle: "بەناوبارا — بازاڕی گەڕەکەکەت",
   metaDescription:
@@ -145,6 +179,7 @@ export const errors = {
   passwordTooShort: "وشەی نهێنی دەبێت لانیکەم ٦ پیت بێت.",
   enterPassword: "وشەی نهێنیەکەت بنووسە.",
   wrongCredentials: "ئیمەیڵ یان وشەی نهێنی هەڵەیە.",
+  emailAlreadyRegistered: "ئەم ئیمەیڵە پێشتر تۆمارکراوە. تکایە بچۆ ژوورەوە.",
   emailNotConfirmed: "تکایە سەرەتا ئیمەیڵەکەت پشتڕاست بکەرەوە. ئیمەیڵەکەت بپشکنە.",
   passwordsDoNotMatch: "وشەکانی نهێنی وەک یەک نین.",
   authGeneric: "هەڵەیەک ڕوویدا. تکایە دووبارە هەوڵبدەرەوە.",
@@ -158,4 +193,6 @@ export const errors = {
   invalidCategory: "پۆلێکی دروست هەڵبژێرە.",
   invalidPhoto: "ئاماژەی وێنە نادروستە.",
   listingNotFound: "ڕاگەیەنراو نەدۆزرایەوە یان مۆڵەتت نییە بۆ دەستکاریکردنی.",
+  reportReasonRequired: "تکایە هۆکاری سکاڵاکە دیاری بکە.",
+  reportFailed: "تۆمارکردنی سکاڵا سەرکەوتوو نەبوو. تکایە دووبارە هەوڵبدەرەوە.",
 } as const;

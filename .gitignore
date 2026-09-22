@@ -23,6 +23,9 @@
 # misc
 .DS_Store
 *.pem
+desktop.ini
+.claude/
+graphify-out/
 
 # debug
 npm-debug.log*

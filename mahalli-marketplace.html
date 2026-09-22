@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mahalli — your neighborhood market</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+:root{
+  --ink:#16262B;
+  --sand:#F6F1E4;
+  --sand-2:#EFE7D4;
+  --teal:#0E6B63;
+  --teal-deep:#0A4F49;
+  --saffron:#E8A23D;
+  --clay:#C1502E;
+  --stone:#8B8378;
+  --card:#FFFDF8;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+body{margin:0; background:var(--sand); color:var(--ink); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased;}
+h1,h2,h3,.display{font-family:'Fraunces',serif;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+
+/* ===== Header ===== */
+header{
+  position:sticky; top:0; z-index:20;
+  background:var(--ink); color:var(--sand);
+  padding:18px 16px 14px;
+  border-bottom:3px solid var(--saffron);
+}
+.brand-row{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:12px;}
+.brand{font-size:26px; font-weight:600; letter-spacing:-0.01em; color:var(--sand);}
+.brand span{color:var(--saffron);}
+.tagline{font-size:11px; color:#B9C4C2; letter-spacing:.06em; text-transform:uppercase; margin-top:2px;}
+.search-wrap{position:relative;}
+#search{
+  width:100%; padding:12px 14px 12px 40px; border-radius:10px; border:none;
+  background:#213A3E; color:var(--sand); font-size:15px; font-family:'Inter';
+}
+#search::placeholder{color:#8FA6A3;}
+.search-wrap svg{position:absolute; left:13px; top:50%; transform:translateY(-50%); opacity:.7;}
+
+/* category chips */
+.chips{display:flex; gap:8px; overflow-x:auto; padding:12px 16px 4px; scrollbar-width:none;}
+.chips::-webkit-scrollbar{display:none;}
+.chip{
+  flex:0 0 auto; display:flex; align-items:center; gap:6px;
+  padding:7px 14px 7px 10px; border-radius:3px 10px 10px 3px; font-size:13px; font-weight:600;
+  background:var(--card); color:var(--ink); border:1.5px solid var(--sand-2); cursor:pointer;
+  position:relative; white-space:nowrap;
+}
+.chip::before{content:''; width:6px; height:6px; border-radius:50%; background:var(--sand); border:1.5px solid var(--stone);}
+.chip.active{background:var(--teal); color:#fff; border-color:var(--teal-deep);}
+.chip.active::before{background:var(--saffron); border-color:var(--saffron);}
+
+/* ===== Feed ===== */
+main{padding:16px; max-width:640px; margin:0 auto; padding-bottom:100px;}
+.count-row{font-size:12px; color:var(--stone); margin-bottom:10px; letter-spacing:.03em; text-transform:uppercase;}
+.grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+@media(min-width:520px){.grid{grid-template-columns:1fr 1fr 1fr;}}
+
+.card{
+  background:var(--card); border-radius:12px; overflow:hidden; cursor:pointer;
+  border:1px solid var(--sand-2); transition:transform .15s ease, box-shadow .15s ease;
+  display:flex; flex-direction:column;
+}
+.card:hover{transform:translateY(-2px); box-shadow:0 8px 20px rgba(22,38,43,.1);}
+.card-img{
+  height:110px; display:flex; align-items:center; justify-content:center; font-size:34px;
+  position:relative;
+}
+.sold-badge{
+  position:absolute; top:8px; left:8px; background:var(--clay); color:#fff; font-size:10px;
+  font-weight:700; padding:3px 8px; border-radius:4px; text-transform:uppercase; letter-spacing:.04em;
+}
+.card-body{padding:10px 10px 12px; display:flex; flex-direction:column; gap:6px; flex:1;}
+.card-title{font-size:13.5px; font-weight:600; line-height:1.25; color:var(--ink);}
+.card-loc{font-size:11px; color:var(--stone); display:flex; align-items:center; gap:4px;}
+.ticket{
+  align-self:flex-start; margin-top:auto;
+  background:var(--ink); color:var(--saffron);
+  font-size:13px; font-weight:600; padding:5px 10px 5px 8px;
+  clip-path: polygon(8px 0, 100% 0, 100% 100%, 8px 100%, 0 50%);
+}
+
+.empty{
+  text-align:center; padding:60px 20px; color:var(--stone);
+}
+.empty .display{font-size:22px; color:var(--ink); margin-bottom:6px;}
+
+/* ===== FAB ===== */
+.fab{
+  position:fixed; bottom:22px; right:20px; z-index:30;
+  width:56px; height:56px; border-radius:16px; background:var(--saffron);
+  display:flex; align-items:center; justify-content:center; border:none; cursor:pointer;
+  box-shadow:0 10px 24px rgba(232,162,61,.45);
+}
+
+/* ===== Modal ===== */
+.overlay{
+  position:fixed; inset:0; background:rgba(22,38,43,.55); z-index:40;
+  display:none; align-items:flex-end; justify-content:center;
+}
+.overlay.show{display:flex;}
+.sheet{
+  background:var(--sand); width:100%; max-width:640px; border-radius:18px 18px 0 0;
+  max-height:88vh; overflow-y:auto; padding:20px 18px 28px;
+  animation:slideup .25s ease;
+}
+@keyframes slideup{from{transform:translateY(30px); opacity:0;} to{transform:translateY(0); opacity:1;}}
+.sheet-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;}
+.sheet-top .display{font-size:20px;}
+.close-x{background:none; border:none; font-size:22px; color:var(--stone); cursor:pointer; line-height:1;}
+label{display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--stone); margin:14px 0 6px;}
+input[type=text],input[type=tel],input[type=number],textarea,select{
+  width:100%; padding:11px 12px; border-radius:8px; border:1.5px solid var(--sand-2);
+  background:var(--card); font-family:'Inter'; font-size:14.5px; color:var(--ink);
+}
+textarea{resize:vertical; min-height:70px;}
+.field-row{display:flex; gap:10px;}
+.field-row > div{flex:1;}
+.emoji-pick{display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;}
+.emoji-opt{
+  width:42px; height:42px; border-radius:8px; border:1.5px solid var(--sand-2); background:var(--card);
+  font-size:19px; display:flex; align-items:center; justify-content:center; cursor:pointer;
+}
+.emoji-opt.sel{border-color:var(--teal); background:#E4F1EF;}
+.btn-primary{
+  width:100%; margin-top:20px; padding:14px; border:none; border-radius:10px;
+  background:var(--teal); color:#fff; font-weight:700; font-size:15px; cursor:pointer;
+}
+.btn-primary:active{background:var(--teal-deep);}
+.hint{font-size:11.5px; color:var(--stone); margin-top:4px;}
+
+/* ===== Detail sheet ===== */
+.detail-img{height:180px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:64px; margin-bottom:16px;}
+.detail-price{font-size:26px; font-weight:700; font-family:'IBM Plex Mono'; color:var(--teal-deep);}
+.detail-title{font-size:20px; margin:4px 0 10px;}
+.detail-meta{display:flex; gap:14px; font-size:12.5px; color:var(--stone); margin-bottom:14px;}
+.detail-desc{font-size:14px; line-height:1.6; color:#3A4A4D; margin-bottom:18px;}
+.seller-row{display:flex; align-items:center; gap:10px; background:var(--card); border:1px solid var(--sand-2); border-radius:10px; padding:12px; margin-bottom:16px;}
+.seller-avatar{width:38px; height:38px; border-radius:50%; background:var(--teal); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px;}
+.seller-name{font-weight:600; font-size:14px;}
+.seller-loc{font-size:11.5px; color:var(--stone);}
+.btn-whatsapp{
+  display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:14px;
+  background:#25A85A; color:#fff; border:none; border-radius:10px; font-weight:700; font-size:15px; cursor:pointer;
+}
+.toast{
+  position:fixed; bottom:90px; left:50%; transform:translateX(-50%); background:var(--ink); color:var(--sand);
+  padding:10px 18px; border-radius:8px; font-size:13px; z-index:50; opacity:0; pointer-events:none; transition:opacity .25s;
+}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand-row">
+    <div>
+      <div class="brand">Ma<span>halli</span></div>
+      <div class="tagline">Buy &amp; sell nearby</div>
+    </div>
+  </div>
+  <div class="search-wrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8FA6A3" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input id="search" type="text" placeholder="Search listings…">
+  </div>
+  <div class="chips" id="chips"></div>
+</header>
+
+<main>
+  <div class="count-row" id="countRow">Loading…</div>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="emptyState" style="display:none;">
+    <div class="display">Nothing here yet</div>
+    <div>Be the first to post in this category.</div>
+  </div>
+</main>
+
+<button class="fab" id="fabBtn" aria-label="Post a listing">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16262B" stroke-width="2.6" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+</button>
+
+<!-- Post listing sheet -->
+<div class="overlay" id="postOverlay">
+  <div class="sheet">
+    <div class="sheet-top">
+      <div class="display">Post a listing</div>
+      <button class="close-x" id="closePost">&times;</button>
+    </div>
+
+    <label>Title</label>
+    <input type="text" id="fTitle" placeholder="e.g. Samsung 55&quot; TV, barely used">
+
+    <label>Category</label>
+    <select id="fCategory"></select>
+
+    <label>Icon for your listing</label>
+    <div class="emoji-pick" id="emojiPick"></div>
+
+    <div class="field-row">
+      <div>
+        <label>Price (IQD)</label>
+        <input type="number" id="fPrice" placeholder="150000">
+      </div>
+      <div>
+        <label>Neighborhood</label>
+        <input type="text" id="fLocation" placeholder="e.g. Karrada">
+      </div>
+    </div>
+
+    <label>Description</label>
+    <textarea id="fDesc" placeholder="Condition, details, why you're selling…"></textarea>
+
+    <div class="field-row">
+      <div>
+        <label>Your name</label>
+        <input type="text" id="fName" placeholder="Ahmed">
+      </div>
+      <div>
+        <label>WhatsApp number</label>
+        <input type="tel" id="fPhone" placeholder="+964 7xx xxx xxxx">
+      </div>
+    </div>
+    <div class="hint">Your number is only shown to buyers who tap "Chat on WhatsApp."</div>
+
+    <button class="btn-primary" id="submitlisting">Post listing</button>
+  </div>
+</div>
+
+<!-- Detail sheet -->
+<div class="overlay" id="detailOverlay">
+  <div class="sheet" id="detailContent"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CATEGORIES = [
+  {id:'electronics', label:'Electronics', icons:['📱','💻','🎧','📺','🎮']},
+  {id:'furniture', label:'Furniture', icons:['🛋️','🪑','🛏️','🗄️']},
+  {id:'vehicles', label:'Vehicles', icons:['🚗','🏍️','🚲']},
+  {id:'realestate', label:'Real Estate', icons:['🏠','🏢','🏬']},
+  {id:'fashion', label:'Fashion', icons:['👕','👗','👟','👜']},
+  {id:'jobs', label:'Jobs', icons:['💼']},
+  {id:'other', label:'Other', icons:['📦','🎁','🔧','📚']},
+];
+const CAT_MAP = Object.fromEntries(CATEGORIES.map(c=>[c.id,c]));
+const CAT_COLORS = {
+  electronics:'#DCEEEC', furniture:'#F3E6D8', vehicles:'#E4E9F2',
+  realestate:'#EAE3F0', fashion:'#FBE3E0', jobs:'#E6F0DC', other:'#EFE7D4'
+};
+
+let listings = [];
+let activeCategory = 'all';
+let searchTerm = '';
+let selectedEmoji = null;
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+function timeAgo(ts){
+  const diff = Date.now() - ts;
+  const mins = Math.floor(diff/60000);
+  if(mins < 1) return 'just now';
+  if(mins < 60) return mins+'m ago';
+  const hrs = Math.floor(mins/60);
+  if(hrs < 24) return hrs+'h ago';
+  return Math.floor(hrs/24)+'d ago';
+}
+
+function fmtPrice(p){
+  return Number(p).toLocaleString('en-US');
+}
+
+async function loadListings(){
+  try{
+    const res = await window.storage.get('listings', true);
+    listings = res && res.value ? JSON.parse(res.value) : [];
+  }catch(e){
+    listings = [];
+  }
+  render();
+}
+
+async function saveListings(){
+  await window.storage.set('listings', JSON.stringify(listings), true);
+}
+
+function buildChips(){
+  const wrap = document.getElementById('chips');
+  const all = [{id:'all', label:'All'}, ...CATEGORIES];
+  wrap.innerHTML = all.map(c=>
+    `<div class="chip ${c.id===activeCategory?'active':''}" data-cat="${c.id}">${c.label}</div>`
+  ).join('');
+  wrap.querySelectorAll('.chip').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      activeCategory = el.dataset.cat;
+      buildChips();
+      render();
+    });
+  });
+}
+
+function render(){
+  const grid = document.getElementById('grid');
+  const empty = document.getElementById('emptyState');
+  const countRow = document.getElementById('countRow');
+
+  let filtered = listings.filter(l=>{
+    const matchCat = activeCategory==='all' || l.category===activeCategory;
+    const matchSearch = !searchTerm || l.title.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchCat && matchSearch;
+  }).sort((a,b)=>b.createdAt - a.createdAt);
+
+  countRow.textContent = filtered.length + (filtered.length===1?' listing':' listings') + ' nearby';
+
+  if(filtered.length===0){
+    grid.innerHTML='';
+    empty.style.display='block';
+    return;
+  }
+  empty.style.display='none';
+
+  grid.innerHTML = filtered.map(l=>`
+    <div class="card" data-id="${l.id}">
+      <div class="card-img" style="background:${CAT_COLORS[l.category]||'#EFE7D4'}">
+        ${l.sold?'<div class="sold-badge">Sold</div>':''}
+        ${l.emoji}
+      </div>
+      <div class="card-body">
+        <div class="card-title">${escapeHtml(l.title)}</div>
+        <div class="card-loc">📍 ${escapeHtml(l.location)} · ${timeAgo(l.createdAt)}</div>
+        <div class="ticket mono">${fmtPrice(l.price)} IQD</div>
+      </div>
+    </div>
+  `).join('');
+
+  grid.querySelectorAll('.card').forEach(el=>{
+    el.addEventListener('click', ()=>openDetail(el.dataset.id));
+  });
+}
+
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function openDetail(id){
+  const l = listings.find(x=>x.id===id);
+  if(!l) return;
+  const c = document.getElementById('detailContent');
+  const initials = (l.sellerName||'?').slice(0,1).toUpperCase();
+  const waNumber = (l.phone||'').replace(/[^\d]/g,'');
+  const waMsg = encodeURIComponent(`Hi, is "${l.title}" still available?`);
+
+  c.innerHTML = `
+    <div class="sheet-top">
+      <div class="display">Listing</div>
+      <button class="close-x" id="closeDetail">&times;</button>
+    </div>
+    <div class="detail-img" style="background:${CAT_COLORS[l.category]||'#EFE7D4'}">${l.emoji}</div>
+    <div class="detail-price mono">${fmtPrice(l.price)} IQD</div>
+    <div class="detail-title display">${escapeHtml(l.title)}</div>
+    <div class="detail-meta">
+      <span>📍 ${escapeHtml(l.location)}</span>
+      <span>🏷️ ${CAT_MAP[l.category]?.label || l.category}</span>
+      <span>${timeAgo(l.createdAt)}</span>
+    </div>
+    <div class="detail-desc">${escapeHtml(l.description || 'No description provided.')}</div>
+    <div class="seller-row">
+      <div class="seller-avatar">${initials}</div>
+      <div>
+        <div class="seller-name">${escapeHtml(l.sellerName||'Seller')}</div>
+        <div class="seller-loc">${escapeHtml(l.location)}</div>
+      </div>
+    </div>
+    ${ waNumber ? `
+    <a href="https://wa.me/${waNumber}?text=${waMsg}" target="_blank" class="btn-whatsapp">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.07-1.32A9.94 9.94 0 0012 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.2 14.2c-.22.62-1.28 1.18-1.76 1.24-.45.06-.98.09-3.02-.65-2.55-.94-4.2-3.53-4.33-3.7-.13-.17-1.03-1.37-1.03-2.6s.65-1.85.88-2.1c.22-.25.5-.31.66-.31h.48c.15 0 .35-.02.55.42.22.5.73 1.73.8 1.86.06.13.1.28.02.45-.08.17-.13.28-.25.43-.13.15-.27.34-.38.46-.13.13-.26.27-.11.53.15.26.66 1.09 1.42 1.76 1 .87 1.83 1.15 2.1 1.28.27.13.42.11.58-.07.15-.18.66-.77.83-1.03.17-.27.35-.22.58-.13.24.09 1.5.71 1.75.84.26.13.42.19.48.3.07.11.07.61-.15 1.22z"/></svg>
+      Chat on WhatsApp
+    </a>` : '<div class="hint">No contact number provided for this listing.</div>' }
+    <button class="btn-primary" style="background:${l.sold?'var(--stone)':'var(--clay)'}" id="toggleSold">
+      ${l.sold ? 'Mark as available' : 'Mark as sold'}
+    </button>
+  `;
+
+  document.getElementById('closeDetail').onclick = ()=>closeOverlay('detailOverlay');
+  document.getElementById('toggleSold').onclick = async ()=>{
+    l.sold = !l.sold;
+    await saveListings();
+    render();
+    openDetail(id);
+    toast(l.sold ? 'Marked as sold' : 'Marked as available');
+  };
+
+  showOverlay('detailOverlay');
+}
+
+function showOverlay(id){ document.getElementById(id).classList.add('show'); }
+function closeOverlay(id){ document.getElementById(id).classList.remove('show'); }
+
+function buildCategorySelect(){
+  const sel = document.getElementById('fCategory');
+  sel.innerHTML = CATEGORIES.map(c=>`<option value="${c.id}">${c.label}</option>`).join('');
+  sel.addEventListener('change', buildEmojiPick);
+}
+
+function buildEmojiPick(){
+  const cat = document.getElementById('fCategory').value;
+  const icons = CAT_MAP[cat].icons;
+  selectedEmoji = icons[0];
+  const wrap = document.getElementById('emojiPick');
+  wrap.innerHTML = icons.map(i=>`<div class="emoji-opt ${i===selectedEmoji?'sel':''}" data-e="${i}">${i}</div>`).join('');
+  wrap.querySelectorAll('.emoji-opt').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      selectedEmoji = el.dataset.e;
+      wrap.querySelectorAll('.emoji-opt').forEach(x=>x.classList.remove('sel'));
+      el.classList.add('sel');
+    });
+  });
+}
+
+async function submitListing(){
+  const title = document.getElementById('fTitle').value.trim();
+  const category = document.getElementById('fCategory').value;
+  const price = document.getElementById('fPrice').value;
+  const location = document.getElementById('fLocation').value.trim();
+  const description = document.getElementById('fDesc').value.trim();
+  const sellerName = document.getElementById('fName').value.trim();
+  const phone = document.getElementById('fPhone').value.trim();
+
+  if(!title || !price || !location || !sellerName){
+    toast('Please fill in title, price, neighborhood and your name');
+    return;
+  }
+
+  const listing = {
+    id: 'l_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    title, category, price: Number(price), location, description,
+    sellerName, phone, emoji: selectedEmoji || '📦',
+    sold:false, createdAt: Date.now()
+  };
+  listings.push(listing);
+  try{
+    await saveListings();
+    toast('Listing posted!');
+  }catch(e){
+    toast('Could not save — try again');
+    listings.pop();
+    return;
+  }
+  closeOverlay('postOverlay');
+  clearForm();
+  activeCategory = 'all';
+  buildChips();
+  render();
+}
+
+function clearForm(){
+  ['fTitle','fPrice','fLocation','fDesc','fName','fPhone'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fCategory').selectedIndex = 0;
+  buildEmojiPick();
+}
+
+document.getElementById('fabBtn').addEventListener('click', ()=>showOverlay('postOverlay'));
+document.getElementById('closePost').addEventListener('click', ()=>closeOverlay('postOverlay'));
+document.getElementById('postOverlay').addEventListener('click', (e)=>{ if(e.target.id==='postOverlay') closeOverlay('postOverlay'); });
+document.getElementById('detailOverlay').addEventListener('click', (e)=>{ if(e.target.id==='detailOverlay') closeOverlay('detailOverlay'); });
+document.getElementById('search').addEventListener('input', (e)=>{ searchTerm = e.target.value; render(); });
+document.getElementById('submitlisting').addEventListener('click', submitListing);
+
+buildCategorySelect();
+buildEmojiPick();
+buildChips();
+loadListings();
+</script>
+</body>
+</html>
