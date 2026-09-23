@@ -96,6 +96,11 @@ export const t = {
   confirmPasswordLabel: "دووبارەکردنەوەی وشەی نهێنی",
   updatePassword: "نوێکردنەوەی وشەی نهێنی",
   updatingPassword: "نوێکردنەوە…",
+  showPassword: "پیشاندانی وشەی نهێنی",
+  hidePassword: "شاردنەوەی وشەی نهێنی",
+  requestNewResetLink: "داواکردنی بەستەری نوێ",
+  noResetSession:
+    "هیچ بەستەر یان دانیشتنێکی کارا بۆ ڕێکخستنەوەی وشەی نهێنی نەدۆزرایەوە.",
 
   // Profile setup
   profileTitle: "هەژمارەکەت تەواو بکە",
@@ -182,6 +187,9 @@ export const errors = {
   emailAlreadyRegistered: "ئەم ئیمەیڵە پێشتر تۆمارکراوە. تکایە بچۆ ژوورەوە.",
   emailNotConfirmed: "تکایە سەرەتا ئیمەیڵەکەت پشتڕاست بکەرەوە. ئیمەیڵەکەت بپشکنە.",
   passwordsDoNotMatch: "وشەکانی نهێنی وەک یەک نین.",
+  samePassword: "وشەی نهێنی نوێ دەبێت جیاواز بێت لە وشەی نهێنی پێشوو.",
+  sessionExpired:
+    "بەستەری ڕێکخستنەوە بەسەرچووە یان نادروستە. تکایە دووبارە داوای بەستەرێکی نوێ بکە.",
   authGeneric: "هەڵەیەک ڕوویدا. تکایە دووبارە هەوڵبدەرەوە.",
   nameTooShort: "ناو دەبێت لانیکەم ٢ پیت بێت.",
   locationTooShort: "شوێنی گەڕەک دەبێت لانیکەم ٢ پیت بێت.",

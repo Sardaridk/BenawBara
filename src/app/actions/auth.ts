@@ -30,6 +30,12 @@ async function getOrigin(): Promise<string> {
 /** Map raw Supabase auth error messages to friendly Sorani copy. */
 function mapAuthError(message: string): string {
   const m = message.toLowerCase();
+  if (m.includes("different") || m.includes("same_password")) {
+    return errors.samePassword;
+  }
+  if (m.includes("session") || m.includes("token") || m.includes("auth session missing")) {
+    return errors.sessionExpired;
+  }
   if (m.includes("invalid login credentials")) return errors.wrongCredentials;
   if (m.includes("email not confirmed")) return errors.emailNotConfirmed;
   if (m.includes("password")) return errors.passwordTooShort;
