@@ -91,6 +91,19 @@ export default function ListingForm({ defaultLocation = "", initial }: ListingFo
     if (!file) return;
 
     setUploadError(null);
+
+    // 1. Strict image-only validation (MIME type and file extension)
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    const validExtensions = ["jpg", "jpeg", "png", "webp", "gif", "heic", "heif", "avif"];
+    const isImageMime = file.type ? file.type.startsWith("image/") : false;
+    const isValidExt = ext ? validExtensions.includes(ext) : false;
+
+    if (!isImageMime && !isValidExt) {
+      setUploadError(t.onlyImagesAllowed);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
     setUploading(true);
 
     const supabase = createClient();
@@ -104,13 +117,27 @@ export default function ListingForm({ defaultLocation = "", initial }: ListingFo
         return;
       }
 
-      // Compress client-side before upload to keep uploads fast and cheap.
-      const compressed = await imageCompression(file, {
-        maxSizeMB: 0.6,
-        maxWidthOrHeight: 1280,
+      // 2. High-quality client-side compression targeting < 1 MB (0.8 MB target).
+      // Uses WebP format and 1600px max dimensions for sharp details on Retina/OLED mobile screens.
+      let compressed = await imageCompression(file, {
+        maxSizeMB: 0.8,
+        maxWidthOrHeight: 1600,
+        initialQuality: 0.85,
         useWebWorker: true,
         fileType: "image/webp",
       });
+
+      // 3. Safety check: ensure file is strictly less than 1 MB (1024 * 1024 bytes)
+      const ONE_MB = 1024 * 1024;
+      if (compressed.size >= ONE_MB) {
+        compressed = await imageCompression(compressed, {
+          maxSizeMB: 0.75,
+          maxWidthOrHeight: 1280,
+          initialQuality: 0.78,
+          useWebWorker: true,
+          fileType: "image/webp",
+        });
+      }
 
       // Remove the previously uploaded photo for this in-progress edit so we
       // don't leave orphans when re-picking — but never delete the saved
@@ -229,14 +256,15 @@ export default function ListingForm({ defaultLocation = "", initial }: ListingFo
 
       {/* Photo (optional) */}
       <div>
-        <label className="block text-[11px] font-bold uppercase tracking-[0.05em] text-stone mb-1.5">
+        <label className="block text-[11px] font-bold uppercase tracking-[0.05em] text-stone mb-1">
           {t.photoLabel} <span className="font-medium normal-case tracking-normal">{t.photoOptional}</span>
         </label>
+        <p className="text-[11px] text-stone/80 mb-2">{t.photoHint}</p>
         <input type="hidden" name="image_path" value={imagePath ?? ""} />
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,image/*"
           onChange={handlePhotoChange}
           className="hidden"
           id="photo-input"
@@ -268,7 +296,7 @@ export default function ListingForm({ defaultLocation = "", initial }: ListingFo
                        ${uploading ? "opacity-60 pointer-events-none" : ""}`}
           >
             {uploading ? (
-              <span className="text-sm font-semibold">{t.uploading}</span>
+              <span className="text-xs font-semibold animate-pulse">{t.compressingImage}</span>
             ) : (
               <>
                 <span className="text-2xl">📷</span>

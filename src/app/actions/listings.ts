@@ -63,10 +63,10 @@ function parseListingForm(
     return { error: errors.invalidCategory };
   }
 
-  // Guard: a supplied photo path must live inside this user's own folder.
+  // Guard: a supplied photo path must live inside this user's own folder and be a .webp image.
   // Storage RLS already enforces this on upload, but we double-check here so a
-  // forged form field can't attach someone else's object to a listing.
-  if (imagePath && !imagePath.startsWith(`${userId}/`)) {
+  // forged form field can't attach someone else's object or non-image to a listing.
+  if (imagePath && (!imagePath.startsWith(`${userId}/`) || !imagePath.endsWith(".webp"))) {
     return { error: errors.invalidPhoto };
   }
 
