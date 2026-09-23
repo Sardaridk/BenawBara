@@ -190,7 +190,7 @@ export default async function MyListingsPage({ searchParams }: MyListingsPagePro
                 </div>
 
                 {/* Actions row */}
-                <div className="flex items-center gap-2 w-full sm:w-auto justify-end border-t sm:border-t-0 pt-3 sm:pt-0 border-sand-2">
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end border-t sm:border-t-0 pt-3 sm:pt-0 border-sand-2">
                   <Link
                     href={`/listings/${l.id}/edit`}
                     className="px-3 py-1.5 rounded-lg border border-sand-2 text-stone hover:text-ink text-xs font-semibold hover:border-stone transition-all cursor-pointer"

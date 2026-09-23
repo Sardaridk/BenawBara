@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Noto_Kufi_Arabic, IBM_Plex_Mono } from "next/font/google";
 import { t } from "@/lib/strings";
 import "./globals.css";
@@ -29,7 +29,13 @@ const ibmPlexMono = IBM_Plex_Mono({
   weight: ["500", "600"],
 });
 
-/* ── Metadata ──────────────────────────────────────────────────── */
+/* ── Viewport & Metadata ────────────────────────────────────────── */
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
 
 export const metadata: Metadata = {
   title: t.metaTitle,
@@ -49,7 +55,7 @@ export default function RootLayout({
       dir="rtl"
       className={`${fraunces.variable} ${notoKufiArabic.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col overflow-x-hidden max-w-full">{children}</body>
     </html>
   );
 }

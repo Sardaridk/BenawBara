@@ -69,34 +69,40 @@ export default function ResetPasswordForm() {
 
   useEffect(() => {
     const supabase = createClient();
+    let cancelled = false;
 
-    // 1. Check for errors in the hash or query string
-    if (typeof window !== "undefined") {
-      const hash = window.location.hash || "";
-      const search = window.location.search || "";
-      const hashParams = new URLSearchParams(hash.replace(/^#/, ""));
-      const searchParams = new URLSearchParams(search);
+    // Run asynchronously to avoid calling setState directly in the initial effect body
+    Promise.resolve().then(async () => {
+      if (cancelled) return;
 
-      const errorParam = hashParams.get("error") || searchParams.get("error");
-      const errorCode =
-        hashParams.get("error_code") || searchParams.get("error_code");
+      // 1. Check for errors in the hash or query string
+      if (typeof window !== "undefined") {
+        const hash = window.location.hash || "";
+        const search = window.location.search || "";
+        const hashParams = new URLSearchParams(hash.replace(/^#/, ""));
+        const searchParams = new URLSearchParams(search);
 
-      if (errorParam || errorCode) {
-        setError(errors.sessionExpired);
-        setHasSession(false);
-        return;
-      }
+        const errorParam = hashParams.get("error") || searchParams.get("error");
+        const errorCode =
+          hashParams.get("error_code") || searchParams.get("error_code");
 
-      // 2. If access_token is in hash fragment, establish session
-      const accessToken = hashParams.get("access_token");
-      const refreshToken = hashParams.get("refresh_token");
-      if (accessToken && refreshToken) {
-        supabase.auth
-          .setSession({
+        if (errorParam || errorCode) {
+          if (!cancelled) {
+            setError(errors.sessionExpired);
+            setHasSession(false);
+          }
+          return;
+        }
+
+        // 2. If access_token is in hash fragment, establish session
+        const accessToken = hashParams.get("access_token");
+        const refreshToken = hashParams.get("refresh_token");
+        if (accessToken && refreshToken) {
+          const { data, error: setSessionErr } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
-          })
-          .then(({ data, error: setSessionErr }) => {
+          });
+          if (!cancelled) {
             if (setSessionErr || !data.session) {
               console.error("[reset-password] setSession error:", setSessionErr);
               setError(errors.sessionExpired);
@@ -104,33 +110,38 @@ export default function ResetPasswordForm() {
             } else {
               setHasSession(true);
             }
-          });
-        return;
-      }
-    }
-
-    // 3. Otherwise check current session or auth state change
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        setHasSession(true);
-      } else {
-        // Wait briefly in case onAuthStateChange is about to emit
-        const { data: sub } = supabase.auth.onAuthStateChange(
-          (event, session) => {
-            if (session || event === "PASSWORD_RECOVERY") {
-              setHasSession(true);
-            }
           }
-        );
-        const timer = setTimeout(() => {
-          setHasSession((prev) => (prev === null ? false : prev));
-        }, 1000);
-        return () => {
-          sub.subscription.unsubscribe();
-          clearTimeout(timer);
-        };
+          return;
+        }
+      }
+
+      // 3. Otherwise check current session
+      const { data } = await supabase.auth.getSession();
+      if (!cancelled) {
+        if (data.session) {
+          setHasSession(true);
+        } else {
+          // Listen for recovery event
+          const { data: sub } = supabase.auth.onAuthStateChange(
+            (event, session) => {
+              if (session || event === "PASSWORD_RECOVERY") {
+                if (!cancelled) setHasSession(true);
+              }
+            }
+          );
+          setTimeout(() => {
+            if (!cancelled) {
+              setHasSession((prev) => (prev === null ? false : prev));
+            }
+            sub.subscription.unsubscribe();
+          }, 1000);
+        }
       }
     });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {

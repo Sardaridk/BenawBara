@@ -105,12 +105,12 @@ export default async function ListingDetailsPage({ params }: ListingDetailsPageP
           </div>
 
           {/* Details Body */}
-          <div className="p-6">
-            <span className="ticket text-base mb-4">
+          <div className="p-4 sm:p-6 break-words overflow-hidden">
+            <span className="ticket text-base mb-4 max-w-full truncate">
               {Number(listing.price).toLocaleString("en-US")} {t.currency}
             </span>
 
-            <h1 className="text-3xl font-semibold tracking-tight font-display text-ink mt-2">
+            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight font-display text-ink mt-2 break-words">
               {listing.title}
             </h1>
 
@@ -128,20 +128,20 @@ export default async function ListingDetailsPage({ params }: ListingDetailsPageP
               <h2 className="text-[11px] font-bold uppercase tracking-[0.05em] text-stone mb-2">
                 {t.description}
               </h2>
-              <p className="text-ink/80 text-[15px] font-sans leading-relaxed whitespace-pre-line">
+              <p className="text-ink/80 text-[15px] font-sans leading-relaxed whitespace-pre-line break-words">
                 {listing.description || t.noDescription}
               </p>
             </div>
 
             {/* Seller profile card */}
-            <div className="bg-sand/30 rounded-xl border border-sand-2 p-4 flex items-center justify-between gap-4 mb-6">
+            <div className="bg-sand/30 rounded-xl border border-sand-2 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-teal text-white flex items-center justify-center font-bold text-sm">
+                <div className="w-10 h-10 rounded-full bg-teal text-white flex items-center justify-center font-bold text-sm shrink-0">
                   {sellerName.charAt(0).toUpperCase()}
                 </div>
-                <div>
-                  <h3 className="font-semibold text-sm text-ink">{sellerName}</h3>
-                  <p className="text-xs text-stone">📍 {listing.location}</p>
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-sm text-ink truncate">{sellerName}</h3>
+                  <p className="text-xs text-stone truncate">📍 {listing.location}</p>
                 </div>
               </div>
 
@@ -151,7 +151,7 @@ export default async function ListingDetailsPage({ params }: ListingDetailsPageP
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-[#25A85A] hover:bg-[#1E8E4A] text-white px-4 py-2.5 rounded-lg
-                             text-sm font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                             text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer w-full sm:w-auto shrink-0"
                 >
                   <svg className="w-4 h-4 fill-white" viewBox="0 0 24 24">
                     <path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.07-1.32A9.94 9.94 0 0012 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.2 14.2c-.22.62-1.28 1.18-1.76 1.24-.45.06-.98.09-3.02-.65-2.55-.94-4.2-3.53-4.33-3.7-.13-.17-1.03-1.37-1.03-2.6s.65-1.85.88-2.1c.22-.25.5-.31.66-.31h.48c.15 0 .35-.02.55.42.22.5.73 1.73.8 1.86.06.13.1.28.02.45-.08.17-.13.28-.25.43-.13.15-.27.34-.38.46-.13.13-.26.27-.11.53.15.26.66 1.09 1.42 1.76 1 .87 1.83 1.15 2.1 1.28.27.13.42.11.58-.07.15-.18.66-.77.83-1.03.17-.27.35-.22.58-.13.24.09 1.5.71 1.75.84.26.13.42.19.48.3.07.11.07.61-.15 1.22z" />

@@ -102,7 +102,7 @@ export default async function Home({ searchParams }: HomeProps) {
       <header className="glass sticky top-0 z-20 text-sand border-b-[3px] border-saffron px-4 py-4.5">
         <div className="max-w-2xl mx-auto">
           {/* Logo & Navigation */}
-          <div className="flex justify-between items-baseline mb-4">
+          <div className="flex justify-between items-center flex-wrap gap-2.5 mb-4">
             <div>
               <Link href="/" className="text-3xl font-semibold tracking-tight font-display text-sand hover:opacity-95 transition-opacity">
                 Benaw<span className="text-saffron">Bara</span>
@@ -113,7 +113,7 @@ export default async function Home({ searchParams }: HomeProps) {
             </div>
 
             {user ? (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
                 <Link
                   href="/my-listings"
                   className="text-xs font-semibold text-sand hover:text-saffron transition-colors flex items-center gap-1.5 cursor-pointer bg-white/10 px-2.5 py-1 rounded-lg"
@@ -165,7 +165,7 @@ export default async function Home({ searchParams }: HomeProps) {
       </header>
 
       {/* ── Category Chips ─────────────────────────────────────────── */}
-      <div className="bg-sand py-4 px-4 overflow-x-auto scrollbar-none border-b border-sand-2">
+      <div className="bg-sand py-4 px-4 overflow-x-auto scrollbar-none border-b border-sand-2 max-w-full">
         <div className="max-w-2xl mx-auto flex gap-2">
           {/* All chip */}
           <Link
@@ -199,19 +199,19 @@ export default async function Home({ searchParams }: HomeProps) {
       </div>
 
       {/* ── Main Feed ──────────────────────────────────────────────── */}
-      <main className="flex-1 max-w-2xl w-full mx-auto px-4 py-6 pb-24">
+      <main className="flex-1 max-w-2xl w-full mx-auto px-4 py-6 pb-24 overflow-x-hidden">
         {/* Controls Bar: Count + Sorting */}
-        <div className="flex items-center justify-between gap-2 mb-4 pb-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-2">
           <p className="text-[11px] font-bold tracking-[0.03em] uppercase text-stone">
             {t.listingsNearby(listings?.length || 0)}
           </p>
 
           {/* Sort pills */}
-          <div className="flex items-center gap-1.5 text-xs">
-            <span className="text-stone text-[11px] ms-1">🏷️</span>
+          <div className="flex items-center gap-1.5 text-xs overflow-x-auto scrollbar-none max-w-full pb-1">
+            <span className="text-stone text-[11px] ms-1 shrink-0">🏷️</span>
             <Link
               href={buildUrl({ sort: "newest" })}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
+              className={`shrink-0 px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
                 sort === "newest"
                   ? "bg-stone/20 text-ink font-bold"
                   : "text-stone hover:text-ink"
@@ -221,7 +221,7 @@ export default async function Home({ searchParams }: HomeProps) {
             </Link>
             <Link
               href={buildUrl({ sort: "price_asc" })}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
+              className={`shrink-0 px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
                 sort === "price_asc"
                   ? "bg-stone/20 text-ink font-bold"
                   : "text-stone hover:text-ink"
@@ -231,7 +231,7 @@ export default async function Home({ searchParams }: HomeProps) {
             </Link>
             <Link
               href={buildUrl({ sort: "price_desc" })}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
+              className={`shrink-0 px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
                 sort === "price_desc"
                   ? "bg-stone/20 text-ink font-bold"
                   : "text-stone hover:text-ink"
@@ -259,7 +259,7 @@ export default async function Home({ searchParams }: HomeProps) {
                 href={`/listings/${l.id}`}
                 style={{ animationDelay: `${Math.min(i, 8) * 45}ms` }}
                 className="card animate-rise group flex flex-col bg-card rounded-2xl overflow-hidden
-                           border border-sand-2 cursor-pointer hover:shadow-md transition-all"
+                           border border-sand-2 cursor-pointer hover:shadow-md transition-all min-w-0"
               >
                 {/* Visual Header — photo if present, else category-colored emoji */}
                 <div
@@ -287,14 +287,14 @@ export default async function Home({ searchParams }: HomeProps) {
                 </div>
 
                 {/* Body */}
-                <div className="p-3 flex flex-col flex-1 gap-2">
-                  <h3 className="text-xs font-semibold text-ink line-clamp-2 leading-tight">
+                <div className="p-3 flex flex-col flex-1 gap-2 min-w-0">
+                  <h3 className="text-xs font-semibold text-ink line-clamp-2 leading-tight break-words">
                     {l.title}
                   </h3>
-                  <div className="text-[10px] text-stone flex items-center gap-1 mt-auto">
+                  <div className="text-[10px] text-stone flex items-center gap-1 mt-auto truncate">
                     📍 {l.location} · {timeAgo(l.created_at)}
                   </div>
-                  <div className="ticket text-xs font-mono select-none self-start">
+                  <div className="ticket text-xs font-mono select-none self-start max-w-full truncate">
                     {Number(l.price).toLocaleString("en-US")} {t.currency}
                   </div>
                 </div>

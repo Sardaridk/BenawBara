@@ -18,11 +18,28 @@ export async function GET(request: Request) {
 
   const supabase = await createClient();
 
+  const isRecoveryIntent =
+    type === "recovery" ||
+    next.includes("reset-password") ||
+    searchParams.get("type") === "recovery";
+
   // 1. Exchange PKCE code for session
   if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      const rawUser = data.session?.user as unknown as {
+        recovery_sent_at?: string;
+        amr?: Array<{ method?: string }>;
+      } | undefined;
+
+      const isRecoverySession =
+        isRecoveryIntent ||
+        Boolean(rawUser?.recovery_sent_at) ||
+        data.session?.user?.app_metadata?.provider === "recovery" ||
+        Boolean(rawUser?.amr?.some((a) => a.method === "recovery"));
+
+      const destination = isRecoverySession ? "/reset-password" : next;
+      return NextResponse.redirect(`${origin}${destination}`);
     }
     console.error("[auth/callback] exchangeCodeForSession failed:", error.message);
   }
@@ -31,14 +48,15 @@ export async function GET(request: Request) {
   if (token_hash && type) {
     const { error } = await supabase.auth.verifyOtp({ token_hash, type });
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      const destination = type === "recovery" || isRecoveryIntent ? "/reset-password" : next;
+      return NextResponse.redirect(`${origin}${destination}`);
     }
     console.error("[auth/callback] verifyOtp failed:", error.message);
   }
 
   // 3. If next is reset-password or type is recovery, allow reaching /reset-password
   // so the client-side Supabase client can parse hash fragments (#access_token=...)
-  if (next.includes("reset-password") || type === "recovery") {
+  if (isRecoveryIntent) {
     return NextResponse.redirect(`${origin}/reset-password`);
   }
 

@@ -20,7 +20,7 @@ export default async function ResetPasswordPage({
   // bounce through /auth/callback so the Route Handler can exchange it and set auth cookies.
   if (params.code) {
     redirect(
-      `/auth/callback?code=${encodeURIComponent(params.code)}&next=/reset-password`
+      `/auth/callback?code=${encodeURIComponent(params.code)}&next=/reset-password&type=recovery`
     );
   }
   if (params.token_hash) {
