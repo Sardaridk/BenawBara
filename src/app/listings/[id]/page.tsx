@@ -4,7 +4,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { listingPhotoUrl } from "@/lib/supabase/storage";
 import { notFound } from "next/navigation";
-import { toggleSold, deleteListing } from "@/app/actions/listings";
+import { toggleSold, deleteListing, bumpListing } from "@/app/actions/listings";
 import { t, CATEGORY_LABELS } from "@/lib/strings";
 import ReportModal from "./report-modal";
 import ShareButton from "./share-button";
@@ -83,7 +83,8 @@ export default async function ListingDetailsPage({ params }: ListingDetailsPageP
       *,
       profiles (
         name,
-        phone
+        phone,
+        verified
       )
     `)
     .eq("id", id)
@@ -96,6 +97,15 @@ export default async function ListingDetailsPage({ params }: ListingDetailsPageP
   const isOwner = user && user.id === listing.seller_id;
   const sellerName = listing.profiles?.name || t.seller;
   const sellerPhone = listing.profiles?.phone || "";
+  const isVerified = Boolean(listing.profiles?.verified);
+
+  // Time and cooldown helpers
+  const COOLDOWN_MS = 24 * 60 * 60 * 1000;
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
+  const timeSinceCreated = now - new Date(listing.created_at).getTime();
+  const canBump = isOwner && !listing.sold && timeSinceCreated >= COOLDOWN_MS;
+  const remainingHours = Math.max(1, Math.ceil((COOLDOWN_MS - timeSinceCreated) / (60 * 60 * 1000)));
 
   // Format WhatsApp link
   const waNumber = sellerPhone.replace(/[^\d]/g, "");
@@ -191,7 +201,24 @@ export default async function ListingDetailsPage({ params }: ListingDetailsPageP
                   {sellerName.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-semibold text-sm text-ink truncate">{sellerName}</h3>
+                  <div className="flex items-center gap-1.5">
+                    <h3 className="font-semibold text-sm text-ink truncate">{sellerName}</h3>
+                    {isVerified && (
+                      <span
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-teal/10 text-teal text-[10px] font-bold border border-teal/20 shrink-0"
+                        title={t.verifiedSeller}
+                      >
+                        <svg className="w-2.5 h-2.5 fill-teal" viewBox="0 0 20 20">
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        <span>{t.verifiedBadge}</span>
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-stone truncate">📍 {listing.location}</p>
                 </div>
               </div>
@@ -228,10 +255,30 @@ export default async function ListingDetailsPage({ params }: ListingDetailsPageP
             {/* Owner settings panel */}
             {isOwner && (
               <div className="border-t border-sand-2 pt-6 space-y-3">
+                {!listing.sold && (
+                  canBump ? (
+                    <form action={bumpListing.bind(null, listing.id)}>
+                      <button
+                        type="submit"
+                        className="w-full py-3 rounded-lg bg-teal text-white text-center font-bold text-sm
+                                   hover:bg-teal-deep transition-colors cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
+                      >
+                        <span>⚡</span>
+                        <span>{t.bumpListingFull}</span>
+                      </button>
+                    </form>
+                  ) : (
+                    <div className="w-full py-2.5 px-3 rounded-lg bg-sand-2/50 text-stone text-xs text-center font-medium flex items-center justify-center gap-1.5 select-none">
+                      <span>🕒</span>
+                      <span>{t.bumpCooldown(remainingHours)}</span>
+                    </div>
+                  )
+                )}
+
                 <Link
                   href={`/listings/${listing.id}/edit`}
-                  className="block w-full py-3 rounded-lg bg-teal text-white text-center font-bold text-sm
-                             hover:bg-teal-deep transition-colors cursor-pointer"
+                  className="block w-full py-3 rounded-lg border border-sand-2 text-ink text-center font-bold text-sm
+                             hover:border-stone hover:bg-card transition-colors cursor-pointer"
                 >
                   {t.editListing}
                 </Link>

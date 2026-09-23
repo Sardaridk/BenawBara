@@ -237,3 +237,49 @@ export async function deleteListing(listingId: string): Promise<void> {
   revalidatePath("/");
   redirect("/");
 }
+
+/**
+ * Server action to bump a listing to the top of the feed by updating its created_at.
+ * Sellers are allowed to bump their active listings once every 24 hours.
+ */
+export async function bumpListing(listingId: string): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return;
+
+  // Fetch listing to check ownership, sold status, and timestamp
+  const { data: listing } = await supabase
+    .from("listings")
+    .select("id, seller_id, sold, created_at")
+    .eq("id", listingId)
+    .single();
+
+  if (!listing || listing.seller_id !== user.id || listing.sold) {
+    return;
+  }
+
+  // Check 24-hour cooldown
+  const COOLDOWN_MS = 24 * 60 * 60 * 1000;
+  const timeSinceCreated = Date.now() - new Date(listing.created_at).getTime();
+  if (timeSinceCreated < COOLDOWN_MS) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from("listings")
+    .update({ created_at: new Date().toISOString() })
+    .eq("id", listingId)
+    .eq("seller_id", user.id);
+
+  if (error) {
+    return;
+  }
+
+  revalidatePath("/");
+  revalidatePath("/my-listings");
+  revalidatePath(`/listings/${listingId}`);
+}
+

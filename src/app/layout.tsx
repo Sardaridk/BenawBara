@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Noto_Kufi_Arabic, IBM_Plex_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { t } from "@/lib/strings";
 import "./globals.css";
 
@@ -65,7 +67,12 @@ export default function RootLayout({
       dir="rtl"
       className={`${fraunces.variable} ${notoKufiArabic.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col overflow-x-hidden max-w-full">{children}</body>
+      <body className="min-h-full flex flex-col overflow-x-hidden max-w-full">
+        {children}
+        <Analytics />
+        <SpeedInsights />
+      </body>
     </html>
   );
 }
+

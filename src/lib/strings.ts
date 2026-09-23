@@ -58,6 +58,13 @@ export const t = {
   markAvailable: "نیشانکردن وەک بەردەست",
   markSold: "نیشانکردن وەک فرۆشراو",
   deleteListing: "سڕینەوەی ڕاگەیەنراو",
+  bumpListing: "تازەکردنەوە",
+  bumpListingFull: "تازەکردنەوەی ڕاگەیەنراو",
+  bumpedSuccess: "ڕاگەیەنراوەکە بە سەرکەوتوویی نوێکرایەوە و هاتە سەرەوەی بازاڕ.",
+  bumpCooldown: (hours: number) => `دەتوانیت دوای ${hours} کاتژمێری تر نوێی بکەیتەوە`,
+  bumpAvailable: "ئێستا دەتوانیت ڕاگەیەنراوەکەت بهێنیتەوە سەرەوە",
+  verifiedSeller: "فرۆشیاری باوەڕپێکراو",
+  verifiedBadge: "باوەڕپێکراو",
   whatsappMessage: (title: string) => `سڵاو، ئایا «${title}» هێشتا بەردەستە؟`,
   shareMessage: (title: string, price: string) =>
     `سەیری ئەم کاڵایە بکە لە بەناوبارا:\n«${title}» بە نرخی ${price}`,
@@ -210,6 +217,8 @@ export const errors = {
   invalidCategory: "پۆلێکی دروست هەڵبژێرە.",
   invalidPhoto: "ئاماژەی وێنە نادروستە.",
   listingNotFound: "ڕاگەیەنراو نەدۆزرایەوە یان مۆڵەتت نییە بۆ دەستکاریکردنی.",
+  bumpCooldownActive: "هێشتا کاتی تازەکردنەوە نەهاتووە. ٢٤ کاتژمێر جارێک دەتوانیت ڕاگەیەنراوەکەت نوێ بکەیتەوە.",
+  soldListingCannotBump: "ڕاگەیەنراوی فرۆشراو ناتوانرێت نوێ بکرێتەوە.",
   reportReasonRequired: "تکایە هۆکاری سکاڵاکە دیاری بکە.",
   reportFailed: "تۆمارکردنی سکاڵا سەرکەوتوو نەبوو. تکایە دووبارە هەوڵبدەرەوە.",
 } as const;

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { listingPhotoUrl } from "@/lib/supabase/storage";
-import { toggleSold, deleteListing } from "@/app/actions/listings";
+import { toggleSold, deleteListing, bumpListing } from "@/app/actions/listings";
 import { t, CATEGORY_LABELS } from "@/lib/strings";
 
 type MyListingsPageProps = {
@@ -19,6 +19,8 @@ const CAT_COLORS: Record<string, string> = {
   jobs: "#E6F0DC",
   other: "#EFE7D4",
 };
+
+const COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 export default async function MyListingsPage({ searchParams }: MyListingsPageProps) {
   const { tab = "active" } = await searchParams;
@@ -52,6 +54,8 @@ export default async function MyListingsPage({ searchParams }: MyListingsPagePro
 
   const currentList = tab === "sold" ? soldListings : activeListings;
   const userName = profile?.name || user.email?.split("@")[0] || t.seller;
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
 
   return (
     <div className="flex flex-col min-h-screen bg-sand text-ink px-4 py-8">
@@ -80,9 +84,26 @@ export default async function MyListingsPage({ searchParams }: MyListingsPagePro
               {userName.charAt(0).toUpperCase()}
             </div>
             <div>
-              <h1 className="text-lg font-bold font-display text-ink leading-snug">
-                {userName}
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg font-bold font-display text-ink leading-snug">
+                  {userName}
+                </h1>
+                {profile?.verified && (
+                  <span
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-teal/10 text-teal text-[10px] font-bold border border-teal/20"
+                    title={t.verifiedSeller}
+                  >
+                    <svg className="w-3 h-3 fill-teal" viewBox="0 0 20 20">
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>{t.verifiedBadge}</span>
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-stone">
                 📍 {profile?.location || "—"} {profile?.phone && `· 📱 ${profile.phone}`}
               </p>
@@ -148,84 +169,113 @@ export default async function MyListingsPage({ searchParams }: MyListingsPagePro
           </div>
         ) : (
           <div className="space-y-4">
-            {currentList.map((l) => (
-              <div
-                key={l.id}
-                className="bg-card rounded-2xl border border-sand-2 p-4 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-              >
-                <div className="flex items-center gap-3.5 flex-1 min-w-0">
-                  <div
-                    className="w-16 h-16 rounded-xl relative overflow-hidden flex-shrink-0 flex items-center justify-center text-2xl"
-                    style={{ backgroundColor: CAT_COLORS[l.category] || "#EFE7D4" }}
-                  >
-                    {listingPhotoUrl(l.image_path) ? (
-                      <Image
-                        src={listingPhotoUrl(l.image_path)!}
-                        alt={l.title}
-                        fill
-                        className="object-cover"
-                        sizes="64px"
-                      />
-                    ) : (
-                      l.emoji
+            {currentList.map((l) => {
+              const timeSinceCreated = now - new Date(l.created_at).getTime();
+              const canBump = !l.sold && timeSinceCreated >= COOLDOWN_MS;
+              const remainingHours = Math.max(1, Math.ceil((COOLDOWN_MS - timeSinceCreated) / (60 * 60 * 1000)));
+
+              return (
+                <div
+                  key={l.id}
+                  className="bg-card rounded-2xl border border-sand-2 p-4 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                >
+                  <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                    <div
+                      className="w-16 h-16 rounded-xl relative overflow-hidden flex-shrink-0 flex items-center justify-center text-2xl"
+                      style={{ backgroundColor: CAT_COLORS[l.category] || "#EFE7D4" }}
+                    >
+                      {listingPhotoUrl(l.image_path) ? (
+                        <Image
+                          src={listingPhotoUrl(l.image_path)!}
+                          alt={l.title}
+                          fill
+                          className="object-cover"
+                          sizes="64px"
+                        />
+                      ) : (
+                        l.emoji
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <Link
+                        href={`/listings/${l.id}`}
+                        className="font-semibold text-sm text-ink hover:text-teal transition-colors block truncate"
+                      >
+                        {l.title}
+                      </Link>
+                      <div className="text-[11px] text-stone mt-1 flex items-center gap-2">
+                        <span>🏷️ {CATEGORY_LABELS[l.category] || l.category}</span>
+                        <span>·</span>
+                        <span>📍 {l.location}</span>
+                      </div>
+                      <div className="ticket text-xs mt-2 self-start inline-block">
+                        {Number(l.price).toLocaleString("en-US")} {t.currency}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions row */}
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end border-t sm:border-t-0 pt-3 sm:pt-0 border-sand-2">
+                    {!l.sold && (
+                      canBump ? (
+                        <form action={bumpListing.bind(null, l.id)}>
+                          <button
+                            type="submit"
+                            title={t.bumpAvailable}
+                            className="px-3 py-1.5 rounded-lg bg-teal text-white hover:bg-teal-deep text-xs font-semibold transition-all cursor-pointer shadow-xs flex items-center gap-1"
+                          >
+                            <span>⚡</span>
+                            <span>{t.bumpListing}</span>
+                          </button>
+                        </form>
+                      ) : (
+                        <span
+                          className="px-2.5 py-1.5 rounded-lg bg-sand-2/60 text-stone text-[11px] font-medium flex items-center gap-1 select-none"
+                          title={t.bumpCooldown(remainingHours)}
+                        >
+                          <span>🕒</span>
+                          <span>{remainingHours} کاتژمێر</span>
+                        </span>
+                      )
                     )}
-                  </div>
 
-                  <div className="flex-1 min-w-0">
                     <Link
-                      href={`/listings/${l.id}`}
-                      className="font-semibold text-sm text-ink hover:text-teal transition-colors block truncate"
+                      href={`/listings/${l.id}/edit`}
+                      className="px-3 py-1.5 rounded-lg border border-sand-2 text-stone hover:text-ink text-xs font-semibold hover:border-stone transition-all cursor-pointer"
                     >
-                      {l.title}
+                      {t.editListing}
                     </Link>
-                    <div className="text-[11px] text-stone mt-1 flex items-center gap-2">
-                      <span>🏷️ {CATEGORY_LABELS[l.category] || l.category}</span>
-                      <span>·</span>
-                      <span>📍 {l.location}</span>
-                    </div>
-                    <div className="ticket text-xs mt-2 self-start inline-block">
-                      {Number(l.price).toLocaleString("en-US")} {t.currency}
-                    </div>
+
+                    <form action={toggleSold.bind(null, l.id, l.sold)}>
+                      <button
+                        type="submit"
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                          l.sold
+                            ? "bg-sand-2 text-ink hover:bg-stone/20"
+                            : "bg-clay/10 text-clay hover:bg-clay/20"
+                        }`}
+                      >
+                        {l.sold ? t.markAvailable : t.markSold}
+                      </button>
+                    </form>
+
+                    <form action={deleteListing.bind(null, l.id)}>
+                      <button
+                        type="submit"
+                        className="p-1.5 rounded-lg text-stone hover:text-clay transition-colors cursor-pointer"
+                        title={t.deleteListing}
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        </svg>
+                      </button>
+                    </form>
                   </div>
                 </div>
-
-                {/* Actions row */}
-                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end border-t sm:border-t-0 pt-3 sm:pt-0 border-sand-2">
-                  <Link
-                    href={`/listings/${l.id}/edit`}
-                    className="px-3 py-1.5 rounded-lg border border-sand-2 text-stone hover:text-ink text-xs font-semibold hover:border-stone transition-all cursor-pointer"
-                  >
-                    {t.editListing}
-                  </Link>
-
-                  <form action={toggleSold.bind(null, l.id, l.sold)}>
-                    <button
-                      type="submit"
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                        l.sold
-                          ? "bg-sand-2 text-ink hover:bg-stone/20"
-                          : "bg-clay/10 text-clay hover:bg-clay/20"
-                      }`}
-                    >
-                      {l.sold ? t.markAvailable : t.markSold}
-                    </button>
-                  </form>
-
-                  <form action={deleteListing.bind(null, l.id)}>
-                    <button
-                      type="submit"
-                      className="p-1.5 rounded-lg text-stone hover:text-clay transition-colors cursor-pointer"
-                      title={t.deleteListing}
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polyline points="3 6 5 6 21 6" />
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                      </svg>
-                    </button>
-                  </form>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

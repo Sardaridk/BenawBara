@@ -98,121 +98,60 @@ All SQL migrations live in `supabase/migrations/`:
   - `src/app/robots.ts` allows listing indexing while protecting user-private routes.
   - `src/app/sitemap.ts` hourly revalidated sitemap indexing all active listings.
 
+### 4.6 Production Infrastructure & Free-Tier Guardrails
+- **Health Check & Ping Endpoint**: `src/app/api/health/route.ts` provides a zero-overhead database ping returning `{ status: "ok", database: "connected" }`.
+- **Automated Keep-Alive Ping**: `.github/workflows/keep-alive.yml` runs every 3 days via GitHub Actions cron to prevent Supabase 7-day inactivity pause on the free tier.
+- **Analytics & Speed Insights**: Integrated `@vercel/analytics` and `@vercel/speed-insights` in `src/app/layout.tsx` for real-time traffic, category popularity, and web vitals tracking.
+
+### 4.7 Trust & Engagement Mechanics (Bump & Verification)
+- **Listing Bump Mechanism (تازەکردنەوەی ڕاگەیەنراو)**:
+  - `bumpListing(listingId)` in `src/app/actions/listings.ts` allows sellers to refresh their active listings back to the top of the feed with an enforced 24-hour cooldown.
+  - Dynamic UI in `src/app/my-listings/page.tsx` and `src/app/listings/[id]/page.tsx` displays an active bump button (`⚡ تازەکردنەوە`) when eligible or a remaining cooldown counter (`🕒 X کاتژمێر`) when within the cooldown window.
+- **Verified Seller Badges (نیشانەی فرۆشیاری باوەڕپێکراو)**:
+  - Schema migration `supabase/migrations/20260923_add_verified_to_profiles.sql` adds `verified boolean default false not null` to `public.profiles`.
+  - Elegant verified badge (`✓ باوەڕپێکراو`) rendered alongside verified seller names in `src/app/listings/[id]/page.tsx` and `src/app/my-listings/page.tsx`.
+
 ---
 
 ## 5. Build & Quality Verification
 
 - **Lint Status**: `npm run lint` passes with **0 errors, 0 warnings**.
-- **Build Status**: `npm run build` compiles **13 routes** cleanly:
+- **Build Status**: `npm run build` compiles **14 routes** cleanly:
   - `○ /` (Home Feed)
   - `○ /_not-found`
+  - `ƒ /api/health` (Database Health & Keep-Alive Ping)
   - `ƒ /auth/callback` (Auth PKCE & Recovery Exchange)
-  - `ƒ /listings/[id]` (Dynamic Listing Details + OpenGraph)
+  - `ƒ /listings/[id]` (Dynamic Listing Details, OpenGraph, Verified Badge & Bump)
   - `ƒ /listings/[id]/edit` (Listing Edit Form)
   - `ƒ /listings/new` (Listing Creation)
   - `ƒ /login` (Authentication)
   - `○ /manifest.webmanifest` (PWA Manifest)
-  - `ƒ /my-listings` (User Dashboard)
+  - `ƒ /my-listings` (User Dashboard with Bump & Verification)
   - `ƒ /profile-setup` (Profile Onboarding & Edit)
   - `ƒ /reset-password` (Password Reset)
   - `○ /robots.txt` (SEO Robots)
-  - `ƒ /sitemap.xml` (Dynamic Hourly Sitemap)
+  - `○ /sitemap.xml` (Dynamic Hourly Sitemap)
 
 ---
 
 ## 6. The Master Production Plan to Resume
 
-The following roadmap outlines the exact phases required to publish, harden, and make BenawBara a successful marketplace in Iraqi Kurdistan.
-
 ```mermaid
 graph TD
     A[Phase 1: Viral & SEO] -->|COMPLETED| B[Phase 2: Production Infra & Limits]
-    B --> C[Phase 3: Iraqi Kurdistan Launch Playbook]
-    C --> D[Phase 4: Trust & Growth Mechanics]
+    B -->|COMPLETED| C[Phase 4: Trust & Growth Mechanics]
+    C -->|COMPLETED| D[Phase 3: Iraqi Kurdistan Launch Playbook]
 ```
 
-### Phase 2: Production Infrastructure & Free-Tier Guardrails (NEXT TO EXECUTE)
+### Phase 2: Production Infrastructure & Free-Tier Guardrails (COMPLETED & ACTIVE)
+- [x] Database health check API route (`src/app/api/health/route.ts`).
+- [x] Automated GitHub Actions keep-alive workflow (`.github/workflows/keep-alive.yml`).
+- [x] Vercel Analytics and Speed Insights integrated in `src/app/layout.tsx`.
+- [ ] User Manual Step: Configure Supabase Custom SMTP (Resend) in dashboard to lift 3 emails/hour limit.
 
-#### Step 2.1: Supabase Custom SMTP Configuration (CRITICAL BUG PREVENTION)
-> **Problem**: Supabase's default email provider has a hard limit of **3 to 4 emails per hour**. In production, users will fail to receive password reset emails or signup links.
->
-> **Action Required**:
-> 1. Sign up for a free email delivery service:
->    - **Resend** (Recommended: 3,000 free emails/month, fastest setup) at `resend.com`
->    - OR **Brevo / Sendinblue** (300 free emails/day) at `brevo.com`
-> 2. In Supabase Dashboard:
->    - Navigate to: **Project Settings** → **Authentication** → **SMTP Settings**.
->    - Enable **Custom SMTP**.
->    - Host: `smtp.resend.com` (Port `465` or `587`).
->    - User: `resend`.
->    - Password: `<RESEND_API_KEY>`.
->    - Sender Email: `noreply@yourdomain.com` (or verified domain).
-
-#### Step 2.2: Supabase Free-Tier Inactivity Pause Prevention
-> **Problem**: Supabase free projects pause automatically after **7 days of no incoming database queries**. If paused, users visiting the site will see a blank screen or 500 error.
->
-> **Solution**:
-> - Set up a free automated cron ping to keep the project active:
->   - Option A: Use **UptimeRobot** (free) to ping `https://<project-ref>.supabase.co/rest/v1/` with the anon key header every 24 hours.
->   - Option B: Use **GitHub Actions** scheduled workflow (`cron: '0 6 */2 * *'`) running a curl request to the Supabase REST endpoint.
->   - Option C: Add a Vercel Cron job calling an internal health check API route `/api/health` that selects 1 row from `listings`.
-
-#### Step 2.3: Production Domain & Vercel Configuration
-1. Register a short, memorable Kurdish brand domain (e.g., `benawbara.com`, `benawbara.krd`, or `benawbara.net`).
-2. Add domain in Vercel Dashboard → Project Settings → Domains.
-3. Update Supabase Auth URL Configuration:
-   - Navigate to **Authentication** → **URL Configuration**.
-   - Site URL: `https://benawbara.com`
-   - Redirect URLs:
-     - `https://benawbara.com/**`
-     - `https://benawbara.com/auth/callback`
-     - `https://benawbara.com/reset-password`
-     - `http://localhost:3000/**` (for local dev).
-
-#### Step 2.4: Storage Cleanup on Delete / Update
-- When a listing is deleted or its image is replaced, ensure the old file in Supabase Storage (`listing-photos/{userId}/{uuid}.webp`) is deleted via `supabase.storage.from("listing-photos").remove([oldPath])`. (Implemented in `src/app/actions/listings.ts`, ensure continuous monitoring).
-
----
-
-### Phase 3: Iraqi Kurdistan Cold-Start & Go-To-Market Playbook
-
-A classifieds marketplace cannot launch empty. Kurdish buyers leave immediately if there are only 2 items on the feed.
-
-#### Step 3.1: Supply-First Seeding (The "30 Initial Listings" Rule)
-- Before announcing the platform, seed **30 to 50 realistic, high-quality listings**:
-  - Focus on 2 major cities: **Erbil (هەولێر)** and **Sulaymaniyah (سلێمانی)**.
-  - Target key neighborhoods: Ankawa, Bakhtiari, Dream City, 100M Road, Suly Salim Street, Sarchinar.
-  - High-velocity categories:
-    - **Smartphones**: iPhone 13/14/15 Pro Max, Samsung Galaxy S23/S24.
-    - **Cars & Motorcycles**: Toyota Camry, Hyundai Elantra, Kia Sportage.
-    - **Kurdistan Real Estate**: Apartment rentals in Erbil/Sulaymaniyah.
-    - **Gaming & Laptops**: PlayStation 5, gaming PCs.
-
-#### Step 3.2: Kurdish Social Distribution Channels
-- **Kurdish Facebook Groups**: The #1 marketplace engine in Kurdistan.
-  - Groups: *بازاڕی ئۆنلاین لە کوردستان*, *کڕین و فرۆشتنی ئۆتۆمبێل هەولێر*, *بازاڕی سلێمانی*.
-  - Strategy: Share listing links directly; the newly built OpenGraph tags will display rich preview cards with the photo, IQD price, and title.
-- **Telegram Channels**: Kurdish tech and second-hand trading channels.
-- **Instagram & TikTok Micro-Reels**:
-  - 10-second screen recordings showcasing: "ئاسانترین ڕێگا بۆ فرۆشتنی کەلوپەلەکانت لە هەولێر و سلێمانی بەبێ دەڵاڵ" (The easiest way to sell your items in Erbil and Sulaymaniyah without brokers).
-
-#### Step 3.3: Why WhatsApp is the Primary Conversion Channel
-- Kurdish users do not want to register credit cards or wait 3 days for shipping.
-- The workflow must remain:
-  `Browse Item → Tap "پەیوەندی بە واتساپ" → Direct Voice Note / Negotiation → In-Person Handshake or FastPay / FIB Transfer`.
-
----
-
-### Phase 4: Trust, Safety & Engagement Mechanics
-
-1. **Verified Seller Badges (نیشانەی فرۆشیاری باوەڕپێکراو)**:
-   - Add a `verified` boolean to the `profiles` table.
-   - Display a verified checkmark badge on listings from trusted or identity-checked sellers.
-2. **Listing Bump / Refresh Mechanism (تازەکردنەوەی ڕاگەیەنراو)**:
-   - Allow sellers to bump their listing to the top of the feed once every 48 hours without re-creating it.
-   - Updates `created_at = now()` on the listing row.
-3. **Analytics & Performance Tracking**:
-   - Install `@vercel/analytics` and `@vercel/speed-insights` for zero-configuration, privacy-compliant tracking of page visits, popular categories, and bounce rates.
+### Phase 4: Trust, Safety & Engagement Mechanics (COMPLETED & ACTIVE)
+- [x] 24-hour Listing Bump mechanism (`bumpListing` action, my-listings button, details page panel).
+- [x] Verified Seller Badges (`verified` column in `profiles`, badges in listing details & dashboard).
 
 ---
 
@@ -220,6 +159,9 @@ A classifieds marketplace cannot launch empty. Kurdish buyers leave immediately 
 
 ```
 c:\Users\sarda\BenawBara\
+├── .github/
+│   └── workflows/
+│       └── keep-alive.yml           ← Automated 3-day Supabase keep-alive cron
 ├── public/
 │   ├── apple-touch-icon.png         ← 180x180 iOS home screen icon
 │   ├── icon-192.png                 ← 192x192 Android PWA icon
@@ -229,9 +171,12 @@ c:\Users\sarda\BenawBara\
 │   ├── app/
 │   │   ├── actions/
 │   │   │   ├── auth.ts              ← signInWithPassword, signUpWithPassword, signOut, requestPasswordReset
-│   │   │   ├── listings.ts          ← createListing, updateListing, toggleSold, deleteListing
+│   │   │   ├── listings.ts          ← createListing, updateListing, toggleSold, deleteListing, bumpListing
 │   │   │   ├── profile.ts           ← updateProfile
 │   │   │   └── reports.ts           ← submitReport
+│   │   ├── api/
+│   │   │   └── health/
+│   │   │       └── route.ts         ← Supabase health check & ping endpoint
 │   │   ├── auth/
 │   │   │   └── callback/
 │   │   │       └── route.ts         ← PKCE code exchange & recovery redirect handler
@@ -239,7 +184,7 @@ c:\Users\sarda\BenawBara\
 │   │   │   ├── [id]/
 │   │   │   │   ├── edit/
 │   │   │   │   │   └── page.tsx     ← Listing edit page
-│   │   │   │   ├── page.tsx         ← Listing detail view + OpenGraph metadata
+│   │   │   │   ├── page.tsx         ← Listing detail view + OpenGraph, Verified Badge & Bump
 │   │   │   │   ├── report-modal.tsx ← Listing report modal dialog
 │   │   │   │   └── share-button.tsx ← Native Web Share & WhatsApp share button
 │   │   │   ├── new/
@@ -249,14 +194,14 @@ c:\Users\sarda\BenawBara\
 │   │   │   ├── login-form.tsx       ← Email/password signin & signup form
 │   │   │   └── page.tsx             ← Login page
 │   │   ├── my-listings/
-│   │   │   └── page.tsx             ← User dashboard (active/sold tabs)
+│   │   │   └── page.tsx             ← User dashboard (active/sold tabs, bump button & countdown)
 │   │   ├── profile-setup/
 │   │   │   ├── profile-form.tsx     ← Name, neighborhood, WhatsApp number form
 │   │   │   └── page.tsx             ← Profile onboarding and edit page
 │   │   ├── reset-password/
 │   │   │   └── page.tsx             ← Password reset page
 │   │   ├── globals.css              ← Design tokens, ticket price tag, RTL rules
-│   │   ├── layout.tsx               ← Root layout, fonts, viewport, PWA metadata
+│   │   ├── layout.tsx               ← Root layout, fonts, viewport, PWA, Vercel Analytics & Speed Insights
 │   │   ├── manifest.ts              ← Web App Manifest (PWA)
 │   │   ├── page.tsx                 ← Main feed (search, category chips, sort, FAB)
 │   │   ├── robots.ts                ← Crawler directives (robots.txt)
@@ -273,7 +218,8 @@ c:\Users\sarda\BenawBara\
 │       ├── 20260715_create_profiles.sql
 │       ├── 20260715_create_listings.sql
 │       ├── 20260715_create_listing_photos.sql
-│       └── 20260921_create_reports.sql
+│       ├── 20260921_create_reports.sql
+│       └── 20260923_add_verified_to_profiles.sql ← Verified seller column migration
 ├── .env.local                       ← Supabase URL, anon key, service role key
 ├── AGENTS.md                        ← Next.js 16 agent rules
 ├── handoff.md                       ← THIS MASTER HANDOFF FILE
@@ -286,22 +232,10 @@ c:\Users\sarda\BenawBara\
 
 ## 8. Immediate Action Items for the Next Session
 
-When resuming in a new chat session, execute the following steps in order:
+1. **Apply SQL Migration in Supabase**:
+   - Run `supabase/migrations/20260923_add_verified_to_profiles.sql` in Supabase SQL Editor.
+2. **Setup Custom SMTP in Supabase (Resend)**:
+   - Follow Step 2.1 instructions above with Resend API key to prevent email rate limiting.
+3. **Execute Phase 3 (Cold-Start & Seeding)**:
+   - Seed initial 30 listings in Erbil & Sulaymaniyah across high-demand categories (Smartphones, Vehicles, Real Estate).
 
-1. **Commit and Push Current Pending Changes**:
-   ```bash
-   git add .
-   git commit -m "feat: add opengraph previews, share button, pwa manifest, sitemap, and robots"
-   git push origin master
-   ```
-2. **Run Build & Test**:
-   ```bash
-   npm run lint
-   npm run build
-   ```
-3. **Execute Phase 2 (Infrastructure)**:
-   - Guide the user to configure Custom SMTP in Supabase (Resend).
-   - Set up an automated ping to prevent Supabase 7-day inactivity pause.
-4. **Execute Phase 4.1 & 4.2 (Product Enhancements)**:
-   - Implement the "Bump Listing" (تازەکردنەوە) feature for sellers.
-   - Add `@vercel/analytics` for live user traffic metrics.

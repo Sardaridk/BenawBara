@@ -1,0 +1,30 @@
+name: Supabase Free-Tier Keep-Alive
+
+on:
+  schedule:
+    # Runs at 06:00 UTC every 3 days to prevent Supabase 7-day inactivity pause
+    - cron: '0 6 */3 * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://znxtxwnvhrsjxqwiyvat.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpueHR4d252aHJzanhxd2l5dmF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMzc5MTIsImV4cCI6MjA5OTYxMzkxMn0.0v41M5aIUykE19Ne8koTlu9U4u1sMp33jtOtV3zw3fQ' }}
+        run: |
+          echo "Pinging Supabase database to prevent inactivity pause..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            "$SUPABASE_URL/rest/v1/listings?select=id&limit=1")
+          
+          echo "Response HTTP Status: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
+            echo "Successfully pinged Supabase!"
+          else
+            echo "Failed to ping Supabase, HTTP status $HTTP_STATUS"
+            exit 1
+          fi
