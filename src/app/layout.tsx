@@ -35,11 +35,21 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  themeColor: "#16262B",
 };
 
 export const metadata: Metadata = {
   title: t.metaTitle,
   description: t.metaDescription,
+  icons: {
+    icon: "/icon-192.png",
+    apple: "/apple-touch-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "BenawBara",
+  },
 };
 
 /* ── Root Layout ───────────────────────────────────────────────── */

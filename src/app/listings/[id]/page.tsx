@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
@@ -6,10 +7,56 @@ import { notFound } from "next/navigation";
 import { toggleSold, deleteListing } from "@/app/actions/listings";
 import { t, CATEGORY_LABELS } from "@/lib/strings";
 import ReportModal from "./report-modal";
+import ShareButton from "./share-button";
 
 type ListingDetailsPageProps = {
   params: Promise<{ id: string }>;
 };
+
+export async function generateMetadata({
+  params,
+}: ListingDetailsPageProps): Promise<Metadata> {
+  const { id } = await params;
+  const supabase = await createClient();
+
+  const { data: listing } = await supabase
+    .from("listings")
+    .select("title, description, price, location, image_path")
+    .eq("id", id)
+    .single();
+
+  if (!listing) {
+    return {
+      title: "ڕاگەیەنراو نەدۆزرایەوە — بەناوبارا",
+    };
+  }
+
+  const priceFormatted = `${Number(listing.price).toLocaleString("en-US")} ${t.currency}`;
+  const pageTitle = `${listing.title} (${priceFormatted}) — بەناوبارا`;
+  const pageDescription =
+    listing.description ||
+    `کڕین و فرۆشتنی ${listing.title} لە گەڕەکی ${listing.location}. پەیوەندی ڕاستەوخۆ بە واتساپ لە بازاڕی بەناوبارا.`;
+
+  const photoUrl = listingPhotoUrl(listing.image_path);
+
+  return {
+    title: pageTitle,
+    description: pageDescription,
+    openGraph: {
+      title: pageTitle,
+      description: pageDescription,
+      locale: "ckb_IQ",
+      siteName: "BenawBara — بەناوبارا",
+      images: photoUrl ? [{ url: photoUrl, width: 1200, height: 900, alt: listing.title }] : [],
+    },
+    twitter: {
+      card: photoUrl ? "summary_large_image" : "summary",
+      title: pageTitle,
+      description: pageDescription,
+      images: photoUrl ? [photoUrl] : [],
+    },
+  };
+}
 
 const CAT_COLORS: Record<string, string> = {
   electronics: "#DCEEEC",
@@ -75,6 +122,10 @@ export default async function ListingDetailsPage({ params }: ListingDetailsPageP
           >
             ← {t.backToMarket}
           </Link>
+          <ShareButton
+            title={listing.title}
+            price={`${Number(listing.price).toLocaleString("en-US")} ${t.currency}`}
+          />
         </div>
 
         {/* Listing Card */}
@@ -145,20 +196,26 @@ export default async function ListingDetailsPage({ params }: ListingDetailsPageP
                 </div>
               </div>
 
-              {waNumber && !listing.sold && (
-                <a
-                  href={waUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-[#25A85A] hover:bg-[#1E8E4A] text-white px-4 py-2.5 rounded-lg
-                             text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer w-full sm:w-auto shrink-0"
-                >
-                  <svg className="w-4 h-4 fill-white" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.07-1.32A9.94 9.94 0 0012 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.2 14.2c-.22.62-1.28 1.18-1.76 1.24-.45.06-.98.09-3.02-.65-2.55-.94-4.2-3.53-4.33-3.7-.13-.17-1.03-1.37-1.03-2.6s.65-1.85.88-2.1c.22-.25.5-.31.66-.31h.48c.15 0 .35-.02.55.42.22.5.73 1.73.8 1.86.06.13.1.28.02.45-.08.17-.13.28-.25.43-.13.15-.27.34-.38.46-.13.13-.26.27-.11.53.15.26.66 1.09 1.42 1.76 1 .87 1.83 1.15 2.1 1.28.27.13.42.11.58-.07.15-.18.66-.77.83-1.03.17-.27.35-.22.58-.13.24.09 1.5.71 1.75.84.26.13.42.19.48.3.07.11.07.61-.15 1.22z" />
-                  </svg>
-                  {t.chatWhatsapp}
-                </a>
-              )}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto shrink-0">
+                {waNumber && !listing.sold && (
+                  <a
+                    href={waUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-[#25A85A] hover:bg-[#1E8E4A] text-white px-4 py-2.5 rounded-lg
+                               text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer w-full sm:w-auto shrink-0"
+                  >
+                    <svg className="w-4 h-4 fill-white" viewBox="0 0 24 24">
+                      <path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.07-1.32A9.94 9.94 0 0012 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm5.2 14.2c-.22.62-1.28 1.18-1.76 1.24-.45.06-.98.09-3.02-.65-2.55-.94-4.2-3.53-4.33-3.7-.13-.17-1.03-1.37-1.03-2.6s.65-1.85.88-2.1c.22-.25.5-.31.66-.31h.48c.15 0 .35-.02.55.42.22.5.73 1.73.8 1.86.06.13.1.28.02.45-.08.17-.13.28-.25.43-.13.15-.27.34-.38.46-.13.13-.26.27-.11.53.15.26.66 1.09 1.42 1.76 1 .87 1.83 1.15 2.1 1.28.27.13.42.11.58-.07.15-.18.66-.77.83-1.03.17-.27.35-.22.58-.13.24.09 1.5.71 1.75.84.26.13.42.19.48.3.07.11.07.61-.15 1.22z" />
+                    </svg>
+                    {t.chatWhatsapp}
+                  </a>
+                )}
+                <ShareButton
+                  title={listing.title}
+                  price={`${Number(listing.price).toLocaleString("en-US")} ${t.currency}`}
+                />
+              </div>
             </div>
 
             {/* Non-owner report button */}

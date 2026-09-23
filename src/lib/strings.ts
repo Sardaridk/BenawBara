@@ -50,11 +50,17 @@ export const t = {
   noDescription: "هیچ وەسفێک دانەنراوە.",
   seller: "فرۆشیار",
   chatWhatsapp: "پەیوەندی بە واتساپ",
+  share: "هاوبەشکردن",
+  shareWhatsApp: "هاوبەشکردن لە واتساپ",
+  copyLink: "کۆپیکردنی بەستەر",
+  linkCopied: "بەستەر کۆپیکرا!",
   editListing: "دەستکاری ڕاگەیەنراو",
   markAvailable: "نیشانکردن وەک بەردەست",
   markSold: "نیشانکردن وەک فرۆشراو",
   deleteListing: "سڕینەوەی ڕاگەیەنراو",
   whatsappMessage: (title: string) => `سڵاو، ئایا «${title}» هێشتا بەردەستە؟`,
+  shareMessage: (title: string, price: string) =>
+    `سەیری ئەم کاڵایە بکە لە بەناوبارا:\n«${title}» بە نرخی ${price}`,
 
   // Timeago
   justNow: "ئێستا",
